@@ -1,0 +1,8 @@
+<% for(var i = 0; i < css.length; i++) { %>
+<link rel="stylesheet" href="<%- css[i] %>">
+<% } %>
+<script id="<%- dataId %>" type="application/json"><%- data %></script>
+<div id="<%- elementId %>-component"><%- content %></div>
+<% for(var j = 0; j < js.length; j++) { %>
+<script type="application/javascript" src="<%- js[j] %>"></script>
+<% } %>
