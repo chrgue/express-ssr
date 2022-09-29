@@ -12,7 +12,6 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './templates'))
 app.use("/static", express.static(__dirname + '/public'))
 
-
 const setupRoutes = () => {
     const cache: { [key: string]: Module<any> } = {};
     const importAll = (r: __WebpackModuleApi.RequireContext) => {
@@ -38,6 +37,5 @@ const importTemplates = () => {
 
 importTemplates();
 setupRoutes();
-
 
 export { app as default };

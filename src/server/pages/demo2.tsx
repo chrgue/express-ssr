@@ -7,6 +7,6 @@ export function getProps(request: Request) {
 }
 
 export default (props: ReturnType<typeof getProps>) => {
-    useEffect(() => console.log("Hello from use effect!"));
+    useEffect(() => console.log("Hello from Page useEffect!"));
     return <UIExample text={props.name?.toString() || 'default'}/>;
 };

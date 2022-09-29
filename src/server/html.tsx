@@ -12,13 +12,12 @@ export type Module<T> = {
 
 let a: any = undefined
 
-
-const path1 = path.resolve(__dirname, "public");
-fs.readdir(path1, (err, files) => {
+const publicPath = path.resolve(__dirname, "public");
+fs.readdir(publicPath, (err, files) => {
     a = (files || [])
         .filter(it => path.basename(it).endsWith("-manifest.json"))
         .reduce((prev, curr) => {
-            let text: any = fs.readFileSync(path1 + "/" + curr);
+            let text: any = fs.readFileSync(publicPath + "/" + curr);
             const a: any = curr.split("-")[0]
             // @ts-ignore
             prev[a!] = JSON.parse(text)

@@ -10,9 +10,5 @@
     "strictNullChecks": true,
     "moduleResolution": "node",
     "resolveJsonModule": true
-  },
-  "include": [
-    "./src/**/*.ts",
-    "./src/**/*.tsx"
-  ]
+  }
 }

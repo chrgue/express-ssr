@@ -6,4 +6,4 @@ export function getProps(request: Request) {
     return { name: 'Phoenix' };
 }
 
-export default (props: ReturnType<typeof getProps>): JSX.Element => <UIExample text={props.name.toString()}/>;
+export default (props: ReturnType<typeof getProps>) => <UIExample text={props.name.toString()}/>;
