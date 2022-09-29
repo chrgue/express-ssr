@@ -1,16 +1,23 @@
 const path = require('path');
-const DefinePlugin = require("webpack").DefinePlugin;
-const {WebpackManifestPlugin} = require('webpack-manifest-plugin');
+const webpack = require("webpack");
+const DefinePlugin = webpack.DefinePlugin;
+const NormalModuleReplacementPlugin = webpack.NormalModuleReplacementPlugin;
+const WebpackAssetsManifest = require('webpack-assets-manifest');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const glob = require('glob');
 const nodeExternals = require("webpack-node-externals");
 
-const getConfig = modulePath => {
-
-    const moduleId = path.basename(modulePath).replace(/\.[^/.]+$/, "");
+const getConfig = () => {
+    const entries = glob.sync("src/server/pages/*.tsx")
+        .map((it) => path.basename(it).replace(/\.[^/.]+$/, ""))
+        .map((it) => ({import: './src/client', layer: it}))
+        .reduce((prev, curr) => {
+            Object.assign(prev, {[curr.layer]: curr})
+            return prev
+        }, {});
 
     return ({
-        entry: {[moduleId]: './src/client'},
+        entry: entries,
         module: {
             rules: [
                 {
@@ -25,27 +32,46 @@ const getConfig = modulePath => {
             ]
         },
         resolve: {
-            extensions: ['.tsx', '.ts', '.js'],
-            alias: {
-                module: path.resolve(__dirname, modulePath)
-            }
+            extensions: ['.tsx', '.ts', '.js']
         },
         plugins: [
+            new NormalModuleReplacementPlugin(
+                /__MODULE__/,
+                resource => {
+                    const moduleId = resource.contextInfo.issuerLayer;
+                    resource.request = resource.request.replace(/__MODULE__/, "./server/pages/" + moduleId);
+                }
+            ),
             new DefinePlugin({
-                MODULE_ID: JSON.stringify(moduleId)
+                __MODULE_ID__: DefinePlugin.runtimeValue((ctx) => JSON.stringify(ctx.module.layer))
             }),
             new MiniCssExtractPlugin({
                 filename: "[name].[contenthash].css"
             }),
-            new WebpackManifestPlugin({
-                fileName: `${moduleId}-manifest.json`
+            new WebpackAssetsManifest({
+                publicPath: (filename) => `static/${filename}`,
+                entrypoints: true
             })
         ],
         mode: "development",
         output: {
-            filename: `client-${moduleId}-[contenthash].js`,
+            filename: `[name]-[contenthash].js`,
             path: path.resolve(__dirname, 'dist', 'public'),
             publicPath: "static"
+        },
+        experiments: {
+            layers: true
+        },
+        optimization: {
+            splitChunks: {
+                cacheGroups: {
+                    vendor: {
+                        name: "vendor",
+                        test: /[\\/]node_modules[\\/]/,
+                        chunks: 'all'
+                    }
+                }
+            }
         }
     });
 };
@@ -89,7 +115,4 @@ const serverConfig = {
     externals: [nodeExternals()]
 };
 
-const configs = glob.sync("src/server/pages/*.tsx").map((it) => getConfig(it));
-configs.push(serverConfig);
-
-module.exports = configs;
+module.exports = [getConfig(), serverConfig];

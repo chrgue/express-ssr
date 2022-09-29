@@ -1,11 +1,11 @@
 import React from "react";
-// @ts-ignore
-import Module from 'module';
 import { hydrateRoot } from 'react-dom/client';
+// @ts-ignore
+import Module from '__MODULE__';
 
 declare global {
     // defined in webpack.config.js
-    const MODULE_ID: string
+    const __MODULE_ID__: string
 }
 
 function initialize(appId: string) {
@@ -13,7 +13,7 @@ function initialize(appId: string) {
     const dataElementId = `__${appId.toUpperCase()}_DATA__`
     const element = document.getElementById(elementId);
     const dataElement = document.getElementById(dataElementId);
-    const data = JSON.parse(dataElement?.textContent!);
+    const data = dataElement && JSON.parse(dataElement.textContent!);
 
     if (element) {
         // @ts-ignore
@@ -24,5 +24,5 @@ function initialize(appId: string) {
     }
 }
 
-initialize(MODULE_ID);
+initialize(__MODULE_ID__);
 

@@ -10,28 +10,9 @@ export type Module<T> = {
     default: (t: T) => React.FunctionComponent
 }
 
-let a: any = undefined
-
-const publicPath = path.resolve(__dirname, "public");
-fs.readdir(publicPath, (err, files) => {
-    a = (files || [])
-        .filter(it => path.basename(it).endsWith("-manifest.json"))
-        .reduce((prev, curr) => {
-            let text: any = fs.readFileSync(publicPath + "/" + curr);
-            const a: any = curr.split("-")[0]
-            // @ts-ignore
-            prev[a!] = JSON.parse(text)
-            return prev;
-        }, {});
-});
-
-function getResource(moduleId: string, ext: string) {
-    const aElement = a[moduleId];
-
-    return Object.keys(aElement)
-        .filter((it) => it.endsWith(ext))
-        .map((it) => aElement[it])
-}
+const manifest = fs.readFileSync(path.resolve(__dirname, "public", "assets-manifest.json"))
+const manifestJson = manifest && JSON.parse(manifest.toString())
+const getResource = (moduleId: string, ext: string) => manifestJson.entrypoints[moduleId].assets[ext] || [];
 
 export function html<T>(module: Module<T>, name: string) {
     return (req: Request, res: Response) => {
@@ -45,8 +26,8 @@ export function html<T>(module: Module<T>, name: string) {
             dataId: `__${name.toUpperCase()}_DATA__`,
             elementId: name,
             data: JSON.stringify(props),
-            js: getResource(name, ".js"),
-            css: getResource(name, ".css")
+            js: getResource(name, "js"),
+            css: getResource(name, "css")
         })
     }
 }
