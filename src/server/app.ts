@@ -1,5 +1,6 @@
 import express, { Express } from 'express';
 import dotenv from 'dotenv';
+import compression from 'compression';
 import path from 'path';
 import { html, Module } from './html';
 import "../../.env";
@@ -10,6 +11,8 @@ const app: Express = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './templates'))
+
+app.use(compression())
 app.use("/static", express.static(__dirname + '/public'))
 
 const setupRoutes = () => {

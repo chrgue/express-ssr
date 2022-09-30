@@ -7,10 +7,21 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const glob = require('glob');
 const nodeExternals = require("webpack-node-externals");
 
-let cssLoader = {
+const cssLoader = {
     loader: "css-loader",
     options: {
         modules: true
+    }
+};
+
+const tsLoader = {
+    test: /\.tsx?$/,
+    exclude: /node_modules/,
+    use: {
+        loader: 'ts-loader',
+        options: {
+            onlyCompileBundledFiles: true
+        }
     }
 };
 
@@ -24,13 +35,10 @@ const entries = glob.sync("src/server/pages/*.tsx")
 
 const clientConfig = {
     entry: entries,
+    target: 'web',
     module: {
         rules: [
-            {
-                test: /\.tsx?$/,
-                use: 'ts-loader',
-                exclude: /node_modules/
-            },
+            tsLoader,
             {
                 test: /\.s?css$/,
                 use: [
@@ -93,8 +101,13 @@ const serverConfig = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: 'ts-loader',
                 exclude: /node_modules/,
+                use: {
+                    loader: 'ts-loader',
+                    options: {
+                        onlyCompileBundledFiles: true
+                    }
+                }
             },
             {
                 test: /\.s?css/,
