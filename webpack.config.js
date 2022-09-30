@@ -7,73 +7,82 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const glob = require('glob');
 const nodeExternals = require("webpack-node-externals");
 
-const getConfig = () => {
-    const entries = glob.sync("src/server/pages/*.tsx")
-        .map((it) => path.basename(it).replace(/\.[^/.]+$/, ""))
-        .map((it) => ({import: './src/client', layer: it}))
-        .reduce((prev, curr) => {
-            Object.assign(prev, {[curr.layer]: curr})
-            return prev
-        }, {});
+let cssLoader = {
+    loader: "css-loader",
+    options: {
+        modules: true
+    }
+};
 
-    return ({
-        entry: entries,
-        module: {
-            rules: [
-                {
-                    test: /\.tsx?$/,
-                    use: 'ts-loader',
-                    exclude: /node_modules/
-                },
-                {
-                    test: /\.css?$/,
-                    use: [MiniCssExtractPlugin.loader, "css-loader"]
-                }
-            ]
-        },
-        resolve: {
-            extensions: ['.tsx', '.ts', '.js']
-        },
-        plugins: [
-            new NormalModuleReplacementPlugin(
-                /__MODULE__/,
-                resource => {
-                    const moduleId = resource.contextInfo.issuerLayer;
-                    resource.request = resource.request.replace(/__MODULE__/, "./server/pages/" + moduleId);
-                }
-            ),
-            new DefinePlugin({
-                __MODULE_ID__: DefinePlugin.runtimeValue((ctx) => JSON.stringify(ctx.module.layer))
-            }),
-            new MiniCssExtractPlugin({
-                filename: "[name].[contenthash].css"
-            }),
-            new WebpackAssetsManifest({
-                publicPath: (filename) => `static/${filename}`,
-                entrypoints: true
-            })
-        ],
-        mode: "development",
-        output: {
-            filename: `[name]-[contenthash].js`,
-            path: path.resolve(__dirname, 'dist', 'public'),
-            publicPath: "static"
-        },
-        experiments: {
-            layers: true
-        },
-        optimization: {
-            splitChunks: {
-                cacheGroups: {
-                    vendor: {
-                        name: "vendor",
-                        test: /[\\/]node_modules[\\/]/,
-                        chunks: 'all'
-                    }
+const entries = glob.sync("src/server/pages/*.tsx")
+    .map((it) => path.basename(it).replace(/\.[^/.]+$/, ""))
+    .map((it) => ({import: './src/client', layer: it}))
+    .reduce((prev, curr) => {
+        Object.assign(prev, {[curr.layer]: curr})
+        return prev
+    }, {});
+
+const clientConfig = {
+    entry: entries,
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/
+            },
+            {
+                test: /\.s?css$/,
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    cssLoader,
+                    'sass-loader'
+                ]
+            }
+        ]
+    },
+    resolve: {
+        extensions: ['.tsx', '.ts', '.js']
+    },
+    plugins: [
+        new NormalModuleReplacementPlugin(
+            /__MODULE__/,
+            resource => {
+                const moduleId = resource.contextInfo.issuerLayer;
+                resource.request = resource.request.replace(/__MODULE__/, "./server/pages/" + moduleId);
+            }
+        ),
+        new DefinePlugin({
+            __MODULE_ID__: DefinePlugin.runtimeValue((ctx) => JSON.stringify(ctx.module.layer))
+        }),
+        new MiniCssExtractPlugin({
+            filename: "[name].[contenthash].css"
+        }),
+        new WebpackAssetsManifest({
+            publicPath: (filename) => `static/${filename}`,
+            entrypoints: true
+        })
+    ],
+    mode: "development",
+    output: {
+        filename: `[name]-[contenthash].js`,
+        path: path.resolve(__dirname, 'dist', 'public'),
+        publicPath: "static"
+    },
+    experiments: {
+        layers: true
+    },
+    optimization: {
+        splitChunks: {
+            cacheGroups: {
+                vendor: {
+                    name: "vendor",
+                    test: /[\\/]node_modules[\\/]/,
+                    chunks: 'all'
                 }
             }
         }
-    });
+    }
 };
 
 const serverConfig = {
@@ -88,8 +97,15 @@ const serverConfig = {
                 exclude: /node_modules/,
             },
             {
-                test: /\.css?$/,
-                use: ["css-loader"]
+                test: /\.s?css/,
+                use: [
+                    {
+                        loader: MiniCssExtractPlugin.loader,
+                        options: {emit: false}
+                    },
+                    cssLoader,
+                    'sass-loader'
+                ]
             },
             {
                 test: /\.ejs?$/,
@@ -112,7 +128,8 @@ const serverConfig = {
     },
     mode: "development",
     target: 'node',
-    externals: [nodeExternals()]
+    externals: [nodeExternals()],
+    plugins: [new MiniCssExtractPlugin()]
 };
 
-module.exports = [getConfig(), serverConfig];
+module.exports = [clientConfig, serverConfig];
