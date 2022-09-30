@@ -12,7 +12,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
+    "@testing-library/user-event": "^14.4.3",
     "@types/compression": "^1.7.2",
     "@types/connect-livereload": "^0.6.0",
     "@types/express": "^4.17.14",
